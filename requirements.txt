@@ -1,0 +1,9 @@
+torch
+transformers
+accelerate
+bitsandbytes
+numpy
+scipy
+matplotlib
+pytest
+pytest-cov

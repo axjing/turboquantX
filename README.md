@@ -1,360 +1,255 @@
-# TurboQuantX: High-Performance KV Cache Compression
+# turboquantX
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/turboquantx/turboquantx)
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-passing-green.svg)](tests/)
+**turboquantX** 是一个统一的高性能 KV 缓存压缩框架，专门为大语言模型（LLM）推理优化设计。
 
-**TurboQuantX** is a unified, high-performance KV cache compression library that combines the best features of [TurboQuant+](https://github.com/TheTom/turboquant_plus) and [RotorQuant](https://github.com/scrya-com/rotorquant), delivering superior performance, flexibility, and ease of use.
+## 🚀 核心特性
 
-## 🚀 Key Features
+### 多量化算法支持
 
-- **Multiple Rotation Types**: Hadamard, Quaternion, Clifford, and Planar rotations
-- **PolarQuant + QJL**: Unbiased inner product quantization for accurate attention
-- **MSE-Only Mode**: Optimized value compression
-- **Sparse V Optimization**: Up to 50% faster dequantization at long contexts
-- **Unified API**: Consistent interface with both NumPy and PyTorch support
-- **Production Ready**: Comprehensive testing, documentation, and examples
+- **TurboQuant**: 原始 TurboQuant 算法（极坐标量化 + QJL）
+- **IsoQuant**: 四元数 4D 块旋转量化（推荐默认）
+- **PlanarQuant**: 2D Givens 旋转量化（最快）
+- **RotorQuant**: Clifford 代数旋转量化
 
-## 📊 Performance
+### 优化策略
 
-| Config | Bits | Compression | PPL (wikitext-2) | Speed vs FP16 |
-|--------|------|-------------|------------------|---------------|
-| **turbo2** | 2.5 | 6.4x | +6.48% | 0.85x |
-| **turbo3** | 3.5 | 4.6x | +1.06% | 0.90x |
-| **turbo4** | 4.25 | 3.8x | +0.23% | 0.93x |
+1. **批量处理优化**: 向量化操作，减少Python循环
+2. **缓存机制**: 旋转矩阵、码本只初始化一次
+3. **内存布局**: 连续内存访问，减少缓存失效
+4. **算法优化**: 合并重复计算，提前退出条件
 
-*Results on M5 Max 128GB with Qwen3.5-35B-A3B*
+### 预留接口
 
-## 🔧 Installation
+- ⏳ Triton加速: 架构支持，待实现
+- ⏳ CUDA内核: 架构支持，待实现
+- ⏳ llama.cpp: 集成层预留
 
-### Quick Install
+### 设计原则
+
+- ✅ **第一性原理**: 聚焦核心功能，剔除冗余
+- ✅ **简单易用**: 配置驱动，预设模板
+- ✅ **高效**: 算法+内存+缓存三重优化
+- ✅ **模块化**: 单一职责，接口隔离
+- ✅ **可拓展**: 插件化架构，预留接口
+
+## 🏗️ 项目结构
+
+```
+turboquantX/
+├── turboquantx/           # 核心库
+│   ├── quantizers/         # 量化算法
+│   │   ├── base.py         # 基础量化器类
+│   │   ├── turboquant.py   # TurboQuant 算法
+│   │   ├── isoquant.py     # IsoQuant 算法
+│   │   ├── planarquant.py  # PlanarQuant 算法
+│   │   └── rotorquant.py   # RotorQuant 算法
+│   ├── cache/              # 缓存管理
+│   │   ├── compressor.py   # KV 缓存压缩器
+│   │   └── sparse_v.py     # 稀疏 V 优化
+│   ├── utils/              # 工具函数
+│   │   ├── codebook.py     # 码本生成
+│   │   ├── bit_packing.py  # 位打包工具
+│   │   ├── registry.py     # 量化器注册表
+│   │   └── profiler.py     # 性能分析
+│   └── backends/           # 硬件后端
+│       └── optimizer.py     # 后端优化
+├── benchmarks/             # 基准测试套件
+│   ├── benchmark_quantizers.py    # 算法比较
+│   ├── benchmark_perplexity.py    # 困惑度测试
+│   ├── benchmark_vram.py          # VRAM 节省
+│   ├── benchmark_speed.py         # 速度性能
+│   └── benchmark_google_parity.py # Google 对等性测试
+├── tests/                  # 单元测试
+└── examples/              # 使用示例
+```
+
+## TodoList
+
+**P0:**
+
+- [ ] 实现Triton内核加速
+- [ ] 完成CUDA后端集成
+- [ ]添加llama.py集成示例
+
+**P1**
+
+- [ ] 动态位宽调整
+- [ ] MoE-aware压缩
+- [ ] 长上下文优化（64K+）
+
+**P2**
+
+- [ ] 自动配置搜索
+- [ ] 多节点分布式缓存
+- [ ] 硬件感知优化
+
+## 📦 安装
+
+### 基础安装
 
 ```bash
-# Basic installation (NumPy only)
-pip install turboquantx
-
-# With PyTorch support
-pip install turboquantx[torch]
-
-# Full installation with all features
-pip install turboquantx[all]
-
-# Development install
-pip install -e ".[dev]"
+pip install turboquantX
 ```
 
-### Requirements
+### 完整安装
 
-- Python 3.10+
-- NumPy 1.24+
-- SciPy 1.10+
-- Optional: PyTorch 2.0+, Triton 2.1+
+```bash
+pip install turboquantX[full]
+```
 
-## 🎯 Quick Start
+### 开发安装
 
-### Basic Usage
+```bash
+pip install turboquantX[dev]
+```
+
+## 🎯 快速开始
+
+### 基础用法
 
 ```python
-import numpy as np
 import turboquantx as tqx
-from turboquantx.core.config import TurboConfig
 
-# Create configuration
-config = TurboConfig(
-    bits=3,  # 3-bit quantization
-    rotation_type="hadamard",  # Use Walsh-Hadamard rotation
-    use_sparse_v=True  # Enable Sparse V optimization
-)
+# 1行配置
+config = tqx.TurboConfig(bits=3, use_sparse_v=True)
 
-# Create KV cache
-cache = tqx.kv_cache.TurboKVCache(
-    d_key=128,
-    d_value=128,
-    config=config
-)
+# 1行创建缓存
+cache = tqx.kv_cache.TurboKVCache(d_key=128, d_value=128, config=config)
 
-# Simulate model inference
-batch_size, seq_len, d = 2, 10, 128
-keys = np.random.randn(batch_size, seq_len, d).astype(np.float32)
-values = np.random.randn(batch_size, seq_len, d).astype(np.float32)
-
-# Compress and cache
-keys_flat = keys.reshape(-1, d)
-values_flat = values.reshape(-1, d)
-cache.append(keys_flat, values_flat)
-
-# Query the cache
-queries = np.random.randn(batch_size, d).astype(np.float32)
-attention_scores = cache.attention_scores(queries)
-
-# Retrieve values with Sparse V optimization
-values_compressed = cache.get_values(attention_weights=attention_scores)
-
-print(f"Compression ratio: {config.compression_ratio:.2f}x")
-print(f"Values shape: {values_compressed.shape}")
-```
-
-### Advanced Usage
-
-```python
-import torch
-from turboquantx.core.config import TurboConfig, TURBO4_CONFIG
-
-# Use predefined high-quality config
-config = TURBO4_CONFIG.copy()
-config.update(
-    rotation_type="quaternion",  # Use quaternion rotation
-    use_sparse_v=True,
-    backend="torch"
-)
-
-# Create quantizer directly
-quantizer = tqx.quantizers.TurboQuant(
-    d=256,
-    bit_width=4,
-    rotation_type="quaternion"
-)
-
-# Quantize data
-x = torch.randn(100, 256).cuda()
-compressed = quantizer.quantize(x)
-
-# Dequantize
-x_hat = quantizer.dequantize(compressed)
-
-# Compute unbiased inner products
-y = torch.randn(100, 256).cuda()
-ip = quantizer.inner_product(y, compressed)
-```
-
-## 📚 API Reference
-
-### Core Components
-
-#### TurboConfig
-
-Central configuration class for all components:
-
-```python
-from turboquantx.core.config import TurboConfig
-
-config = TurboConfig(
-    bits=3,                    # Bits per coordinate (2, 3, 4)
-    rotation_type="hadamard",  # Rotation type
-    use_sparse_v=True,         # Enable Sparse V
-    sparse_v_threshold=1e-6,   # Attention threshold
-    backend="torch",          # Backend: torch, numpy
-    device="cuda"             # Device: cpu, cuda, mps
-)
-```
-
-#### Quantizers
-
-- **PolarQuant**: MSE-optimal quantizer with rotation
-- **TurboQuant**: Full quantizer with PolarQuant + QJL for unbiased inner products
-- **TurboQuantMSE**: MSE-only mode for values
-
-```python
-from turboquantx.quantizers import PolarQuant, TurboQuant, TurboQuantMSE
-
-# MSE-only
-mse_quant = PolarQuant(d=128, bits=3, seed=42)
-mse_quant.initialize()
-
-# Full TurboQuant (unbiased inner products)
-turbo = TurboQuant(d=128, bit_width=3, seed=42)
-compressed = turbo.quantize(x)
-x_hat = turbo.dequantize(compressed)
-ip = turbo.inner_product(y, compressed)  # Unbiased!
-```
-
-#### KV Cache
-
-```python
-from turboquantx.kv_cache import TurboKVCache
-
-cache = TurboKVCache(
-    d_key=128,
-    d_value=128,
-    config=config
-)
-
-# Append new tokens
+# 1行压缩
 cache.append(keys, values)
 
-# Compute attention scores
+# 1行查询
 scores = cache.attention_scores(queries)
-
-# Retrieve with Sparse V optimization
-values = cache.get_values(attention_weights=scores)
 ```
 
-#### Rotations
+### 高级用法
 
 ```python
-from turboquantx.rotations import (
-    HadamardRotation,
-    QuaternionRotation,
-    PlanarRotation
-)
+from turboquantx.core.config import TURBO4_CONFIG
+from turboquantx.quantizers import TurboQuant
 
-# Walsh-Hadamard (fast, O(n log n))
-rot = HadamardRotation(d=128, seed=42)
-rot.initialize()
-y = rot.rotate(x)
+# 使用预设配置
+config = TURBO4_CONFIG.copy()
+config.rotation_type = "quaternion"
 
-# Quaternion (SO(4), better for geometric data)
-quat = QuaternionRotation(d=128, seed=42, mode="full")
-quat.initialize()
-y = quat.rotate(x)
+# 直接使用量化器
+tq = TurboQuant(d=256, bit_width=4, rotation_type="quaternion")
+compressed = tq.quantize(x)
+ip = tq.inner_product(y, compressed)  # 无偏内积
 ```
 
-### Predefined Configurations
+## 📊 性能基准测试
 
-```python
-from turboquantx.core.config import (
-    TURBO2_CONFIG,  # 2-bit, 6.4x compression
-    TURBO3_CONFIG,  # 3-bit, 4.6x compression
-    TURBO4_CONFIG,  # 4-bit, 3.8x compression
-    ISOQUANT_CONFIG,  # Quaternion rotation
-    PLANARQUANT_CONFIG,  # Planar rotation
-)
+项目包含完整的性能测试套件：
 
-# Use turbo3 with custom settings
-config = TURBO3_CONFIG.copy()
-config.update(rotation_type="quaternion", use_sparse_v=True)
-```
-
-## 🔬 Advanced Features
-
-### Sparse V Optimization
-
-Sparse V skips dequantization of value vectors with low attention weights:
-
-```python
-config = TurboConfig(
-    bits=3,
-    use_sparse_v=True,           # Enable
-    sparse_v_threshold=1e-6     # Threshold
-)
-
-# Automatically applied during get_values()
-values = cache.get_values(attention_weights=scores)
-```
-
-### Multiple Rotation Types
-
-Choose the best rotation for your use case:
-
-- **hadamard**: Fast Walsh-Hadamard Transform, O(n log n), good for most cases
-- **quaternion**: SO(4) isoclinic rotation, better geometric properties
-- **planar**: 2D Givens rotations, lightweight
-- **clifford**: Full Clifford algebra (advanced)
-
-### Backend Support
-
-```python
-# NumPy (default)
-config = TurboConfig(backend="numpy")
-
-# PyTorch with CUDA
-config = TurboConfig(backend="torch", device="cuda")
-
-# MPS (Apple Silicon)
-config = TurboConfig(backend="torch", device="mps")
-```
-
-## 🧪 Testing
+### 综合算法比较
 
 ```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=turboquantx --cov-report=html
-
-# Run benchmarks
-pytest tests/ --benchmark-only
-
-# Run specific test file
-pytest tests/test_polar_quant.py -v
+python -m benchmarks.benchmark_quantizers --bits 2 3 4
 ```
 
-## 📈 Benchmarks
-
-Run the built-in benchmarks:
+### 困惑度测试
 
 ```bash
-# Basic compression benchmark
-python -m turboquantx.benchmarks.compression
-
-# Speed benchmark
-python -m turboquantx.benchmarks.speed
-
-# Memory benchmark
-python -m turboquantx.benchmarks.memory
+python -m benchmarks.benchmark_perplexity --model Qwen/Qwen2.5-3B-Instruct --bits 3 4
 ```
 
-## 🏗️ Architecture
+### VRAM 节省测试
 
-```
-turboquantx/
-├── core/                      # Core abstractions
-│   ├── base.py               # Base classes
-│   ├── config.py             # Configuration
-│   └── utils.py              # Utilities
-├── quantizers/                # Quantization algorithms
-│   ├── polar.py              # PolarQuant (MSE)
-│   ├── turbo.py              # TurboQuant (PolarQuant + QJL)
-│   └── codebook.py           # Lloyd-Max centroids
-├── kv_cache/                  # KV cache implementations
-│   ├── compressor.py         # TurboKVCache
-│   └── sparse_v.py           # Sparse V optimization
-├── rotations/                 # Rotation operations
-│   ├── hadamard.py           # Walsh-Hadamard Transform
-│   ├── quaternion.py         # SO(4) rotation
-│   └── planar.py             # 2D Givens rotation
-└── integrations/              # External integrations
-    └── llama_cpp.py          # llama.cpp support
+```bash
+python -m benchmarks.benchmark_vram --model Qwen/Qwen2.5-3B-Instruct --contexts 1024 2048 4096
 ```
 
-## 🔬 Research Foundation
+### 速度性能测试
 
-TurboQuantX implements algorithms from these papers:
+```bash
+python -m benchmarks.benchmark_speed
+```
 
-- **TurboQuant**: [arXiv:2504.19874](https://arxiv.org/abs/2504.19874) - Base algorithm
-- **PolarQuant**: [arXiv:2502.02617](https://arxiv.org/abs/2502.02617) - Optimal quantization
-- **QJL**: [arXiv:2406.03482](https://arxiv.org/abs/2406.03482) - JL transform
-- **IsoQuant**: Hardware-aligned SO(4) rotations
-- **Sparse V**: Attention-gated dequantization
+### Google TurboQuant 对等性测试
 
-## 🤝 Contributing
+```bash
+python -m benchmarks.benchmark_google_parity --bits 3 4
+```
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+### 性能分析
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```python
+from turboquantx.utils.profiler import QuantizationProfiler
 
-## 📄 License
+profiler = QuantizationProfiler()
+with profiler.record("quantization"):
+    x_hat, indices = quantizer(x)
 
-Apache License 2.0 - see [LICENSE](LICENSE) for details.
+print("性能统计:")
+print(profiler.get_stats())
+```
 
-## 🙏 Acknowledgments
+## 🧪 测试
 
-- **TheTom** for TurboQuant+ implementation and llama.cpp integration
-- **scrya-com** for RotorQuant and quaternion rotations
-- Google Research for TurboQuant paper and algorithm
-- Community contributors and testers
+运行完整测试套件：
 
-## 📧 Contact
+```bash
+python -m pytest tests/ -v
+```
 
-- GitHub Issues: [github.com/turboquantx/turboquantx/issues](https://github.com/turboquantx/turboquantx/issues)
-- Discussions: [github.com/turboquantx/turboquantx/discussions](https://github.com/turboquantx/turboquantx/discussions)
+运行特定测试类别：
+
+```bash
+# 测试量化算法
+python -m pytest tests/test_quantizers.py -v
+
+# 测试缓存压缩
+python -m pytest tests/test_cache.py -v
+
+# 测试工具函数
+python -m pytest tests/test_utils.py -v
+```
+
+## 🤝 贡献
+
+我们欢迎社区贡献！请查看我们的贡献指南获取详细信息。
+
+### 开发设置
+
+```bash
+git clone https://github.com/axjing/turboquantX.git
+cd turboquantx
+pip install -e .[dev]
+```
+
+### 代码风格
+
+我们使用 `black` 进行代码格式化，`isort` 进行导入排序：
+
+```bash
+black turboquantx/
+isort turboquantx/
+```
+
+## 📄 引用
+
+如果您在研究中使用了 turboquantx，请引用：
+
+```bibtex
+@software{turboquantx,
+  title = {turboquantx: Unified KV Cache Compression Framework},
+  author = {axjing},
+  year = {2026},
+  url = {https://github.com/axjing/turboquantX}
+}
+```
+
+本项目参考了 [turboquant_plus](https://github.com/TheTom/turboquant_plus.git) | [rotorquant](https://github.com/scrya-com/rotorquant.git)
+
+- <https://github.com/TheTom/turboquant_plus.git>
+- <https://github.com/scrya-com/rotorquant.git>
+
+## 📜 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ---
 
-**Made with ❤️ for the LLM community**
+**turboquantX** - 让 LLM 推理更高效！🚀

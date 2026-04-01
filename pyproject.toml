@@ -1,0 +1,54 @@
+[project]
+name = "turboquantx"
+version = "1.0.0"
+description = "Unified KV Cache Compression Framework for LLMs"
+authors = [
+    {name = "turboquantx Team"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "triton>=3.0.0",
+    "transformers>=4.30.0",
+    "accelerate>=0.20.0",
+    "bitsandbytes>=0.41.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "matplotlib>=3.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+]
+full = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "accelerate>=0.20.0",
+    "datasets>=2.10.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/turboquantx/turboquantx"
+"Documentation" = "https://turboquantx.readthedocs.io"
+"Repository" = "https://github.com/turboquantx/turboquantx"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
