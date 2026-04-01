@@ -69,7 +69,7 @@ turboquantX/
 
 - [ ] 实现Triton内核加速
 - [ ] 完成CUDA后端集成
-- [ ]添加llama.py集成示例
+- [ ] 添加llama.py集成示例
 
 **P1**
 
